@@ -1,0 +1,39 @@
+sudo: false
+
+cache:
+  apt: true
+  ccache: true    
+
+language: generic
+matrix:
+  include:
+    - os: linux
+      env:
+        - COMPILER_NAME=gcc
+        - CXX=g++-7
+        - CC=gcc-7
+      dist: trusty
+      addons:
+        apt:
+          packages:
+            - g++-7
+            - cmake
+            - cmake-data
+            - gdb
+            - apport
+            - openmpi-bin
+            - libopenmpi-dev
+          sources:
+            - ubuntu-toolchain-r-test
+before_install:
+  - git clone https://github.com/simongog/sdsl-lite.git
+  - cd sdsl-lite
+  - ./install.sh
+  - cd ..
+script:
+  - git submodule update --init
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_BUILD_TYPE=Release ..
+  - make check
+  - make
