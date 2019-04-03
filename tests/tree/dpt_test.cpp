@@ -77,6 +77,7 @@ TEST_F(dpt_test, existential_batched_existing) {
   q_list queries = gen_random_existing_queries(2000, 10);
   auto results = dpt_.existential_batched<dpt::com::collective_communication>(
     std::move(queries));
+  ASSERT_EQ(2000, results.size());
   for (const auto& result : results) {
     ASSERT_EQ(dpt::tree::search_state::MATCH, result);
   }
