@@ -39,27 +39,31 @@ class partition {
 
 public:
   partition(dpt::mpi::environment env = dpt::mpi::environment()) : env_(env), global_size_(0),
-    local_size_(0) { }
+    local_size_(0), min_local_size_(0) { }
 
   partition(const GlobalIndex global_size, const GlobalIndex local_size,
     std::vector<Alphabet>&& local_data, dpt::mpi::environment env = dpt::mpi::environment())
   : env_(env),
     global_size_(global_size),
     local_size_(local_size),
+    min_local_size_(global_size_ / env_.size()),
     local_data_(std::move(local_data)) { }
 
   partition(const partition& other) : env_(other.env_),
     global_size_(other.global_size_), local_size_(other.local_size_),
+    min_local_size_(other.min_local_size_),
     local_data_(other.local_data_) { }
 
   partition(partition&& other) : env_(std::move(other.env_)),
     global_size_(other.global_size_), local_size_(other.local_size_),
+    min_local_size_(other.min_local_size_),
     local_data_(std::move(other.local_data_)) { }
 
   partition& operator = (partition&& other) {
     env_ = std::move(other.env_);
     global_size_ = other.global_size_;
     local_size_ = other.local_size_;
+    min_local_size_ = other.min_local_size_;
     local_data_ = std::move(other.local_data_);
     return *this;
   }
@@ -99,15 +103,15 @@ public:
 
   inline int32_t pe(const GlobalIndex index) const {
     return std::min(
-      static_cast<int32_t>(index / local_size_), env_.size() -  1);
+      static_cast<int32_t>(index / min_local_size_), env_.size() -  1);
   }
 
   inline pe_and_position pe_and_norm_position(
     const GlobalIndex index) const {
     const auto pe =
-      std::min(static_cast<int32_t>(index / local_size_), env_.size() - 1);
+      std::min(static_cast<int32_t>(index / min_local_size_), env_.size() - 1);
     return pe_and_position { pe,
-      static_cast<LocalIndex>(index - (pe * local_size_)) };
+      static_cast<LocalIndex>(index - (pe * min_local_size_)) };
   }
 
 private:
@@ -115,6 +119,7 @@ private:
 
   size_t global_size_;
   size_t local_size_;
+  size_t min_local_size_; // the local size of PEs excl the last one
   std::vector<Alphabet> local_data_;
 
 }; // class partition

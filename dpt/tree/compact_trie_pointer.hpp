@@ -204,15 +204,20 @@ public:
         } else if (q_pos == query.length) {
           return { search_state::MATCH,
             leftmost_leaf(nodes_[cur_node.edge_begin + child_pos]).edge_begin };
-        } else if (e_pos >
-          labels_starting_positions_[cur_node.edge_begin + child_pos + 1]) {
-          return { search_state::LEFT_OF,
-            leftmost_leaf(nodes_[cur_node.edge_begin + child_pos]).edge_begin };
-        } else if (e_pos <
-          labels_starting_positions_[cur_node.edge_begin + child_pos + 1]) {
-          return { search_state::RIGHT_OF,
-            rightmost_leaf(
-              nodes_[cur_node.edge_begin + child_pos]).edge_begin };
+        } else {
+          // mismatch on the path label
+          assert(e_pos < labels_starting_positions_[cur_node.edge_begin + child_pos + 1]);
+          assert(q_pos < query.length);
+          assert(labels_[e_pos] != query[q_pos]);
+
+          if(query[q_pos] < labels_[e_pos]) {
+           return { search_state::LEFT_OF,
+             leftmost_leaf(nodes_[cur_node.edge_begin + child_pos]).edge_begin };
+          } else if (query[q_pos] > labels_[e_pos]) {
+           return { search_state::RIGHT_OF,
+             rightmost_leaf(
+               nodes_[cur_node.edge_begin + child_pos]).edge_begin };
+          }
         }
       }
     }
@@ -249,6 +254,7 @@ public:
           ++e_pos;
           ++q_pos;
         }
+        // edge label matches query up to string depth of next ndoe (first child of this node)
         if (e_pos ==
           labels_starting_positions_[cur_node.edge_begin + child_pos + 1]) {
           cur_node = nodes_[cur_node.edge_begin + child_pos];
@@ -257,16 +263,25 @@ public:
             leftmost_leaf(nodes_[cur_node.edge_begin + child_pos]).edge_begin,
             rightmost_leaf(nodes_[
               cur_node.edge_begin + child_pos]).edge_begin };
-        } else if (e_pos >
-          labels_starting_positions_[cur_node.edge_begin + child_pos + 1]) {
-          const auto leftmost = leftmost_leaf(nodes_[
-          cur_node.edge_begin + child_pos]).edge_begin;
-          return { search_state::LEFT_OF, leftmost, leftmost };
-        } else if (e_pos <
-          labels_starting_positions_[cur_node.edge_begin + child_pos + 1]) {
-          const auto rightmost = rightmost_leaf(nodes_[
-          cur_node.edge_begin + child_pos - 1]).edge_begin;
-          return { search_state::RIGHT_OF, rightmost, rightmost };
+        } else {
+          // mismatch on the path label
+          assert(e_pos < labels_starting_positions_[cur_node.edge_begin + child_pos + 1]);
+          assert(q_pos < query.length);
+          assert(labels_[e_pos] != query[q_pos]);
+
+          // the result lies somewhere left of all the children underneath, ie,
+          // left of the leftmost in this subtree or right of the rightmost
+          // child in this subtree
+
+           if(query[q_pos] < labels_[e_pos]) {
+            const auto leftmost = leftmost_leaf(nodes_[
+            cur_node.edge_begin + child_pos]).edge_begin;
+            return { search_state::LEFT_OF, leftmost, leftmost };
+           } else if (query[q_pos] > labels_[e_pos]) {
+            const auto rightmost = rightmost_leaf(nodes_[
+            cur_node.edge_begin + child_pos]).edge_begin;
+            return { search_state::RIGHT_OF, rightmost, rightmost };
+          }
         }
       }
     }

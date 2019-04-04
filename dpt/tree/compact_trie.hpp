@@ -38,6 +38,25 @@ public:
 
   inline search_result<uint32_t> first_occurrence(const query_view& query) const {
     const auto result = trie_.first_occurrence(query);
+    // TODO: this can probably be expressed more consicely
+    //       I wrote this out to more explicit of what is happening
+
+    // if the query falls in between to processors: NO_MATCH
+    if ((result.state == search_state::LEFT_OF && 
+      (result.position % 2 == 0)) || // if left of one processor
+      (result.state == search_state::RIGHT_OF &&
+      (result.position % 2 == 1))) { // if right of on processor 
+      return { search_state::NO_MATCH, 0};
+
+    // if the query falls on a processor but between edges
+    } else if ((result.state == search_state::LEFT_OF && 
+      (result.position % 2 == 1)) || // if left of one processor
+      (result.state == search_state::RIGHT_OF &&
+      (result.position % 2 == 0))) { // if right of on processor 
+      return { search_state::MATCH, result.position };
+    }
+    // else we have found a match already
+    assert(search_state::MATCH);
     if ((result.state == search_state::LEFT_OF && !(result.position & 1UL)) ||
       (result.state == search_state::RIGHT_OF && (result.position & 1UL))) {
       return { search_state::NO_MATCH, 0 };
@@ -48,13 +67,27 @@ public:
   inline search_result_pair<uint32_t>first_and_last_occurrence(
     const query_view& query) const {
     const auto result = trie_.first_and_last_occurrence(query);
+    // TODO: this can probably be expressed more consicely
+    //       I wrote this out to more explicit of what is happening
+
+    // if the query falls in between to processors: NO_MATCH
     if ((result.state == search_state::LEFT_OF && 
-      !(result.left_position & 1UL)) ||
+      (result.left_position % 2 == 0)) || // if left of one processor
       (result.state == search_state::RIGHT_OF &&
-      (result.right_position & 1UL))) {
+      (result.right_position % 2 == 1))) { // if right of on processor 
       assert(result.left_position == result.right_position);
       return { search_state::NO_MATCH, 0, 0 };
+
+    // if the query falls on a processor but between edges
+    } else if ((result.state == search_state::LEFT_OF && 
+      (result.left_position % 2 == 1)) || // if left of one processor
+      (result.state == search_state::RIGHT_OF &&
+      (result.right_position % 2 == 0))) { // if right of on processor 
+      assert(result.left_position == result.right_position);
+      return { search_state::MATCH, result.left_position, result.right_position };
     }
+    // else we have found a match already
+    assert(search_state::MATCH);
     return result;
   }
 
