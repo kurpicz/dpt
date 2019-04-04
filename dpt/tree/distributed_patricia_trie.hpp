@@ -75,8 +75,8 @@ public:
         target_pes[i] = -1;
       }
     }
-    std::vector<GlobalIndex> displ(env_.size(), 0);
-    std::vector<GlobalIndex> displ_length(env_.size(), 0);
+    std::vector<size_t> displ(env_.size(), 0);
+    std::vector<size_t> displ_length(env_.size(), 0);
     for (int32_t i = 1; i < env_.size(); ++i) {
       displ[i] = displ[i - 1] + hist[i - 1];
       displ_length[i] = displ_length[i - 1] + hist_length[i - 1];
@@ -89,6 +89,7 @@ public:
         std::copy_n(queries[i].query, queries[i].length, 
           queries_to_distribute.begin() + displ_length[target_pes[i]]);
         displ_length[target_pes[i]] += queries[i].length;
+        lengths_to_distribute[displ[target_pes[i]]++] = queries[i].length;
       }
     }
     q_list rec_queries = manager_.template distribute_queries<Communication>(
@@ -117,8 +118,8 @@ public:
         target_pes[i] = std::make_pair(-1, -1);
       }
     }
-    std::vector<GlobalIndex> displ(env_.size(), 0);
-    std::vector<GlobalIndex> displ_length(env_.size(), 0);
+    std::vector<size_t> displ(env_.size(), 0);
+    std::vector<size_t> displ_length(env_.size(), 0);
     for (int32_t i = 1; i < env_.size(); ++i) {
       displ[i] = displ[i - 1] + hist[i - 1];
       displ_length[i] = displ_length[i - 1] + hist_length[i - 1];
@@ -131,10 +132,12 @@ public:
         std::copy_n(queries[i].query, queries[i].length, 
           queries_to_distribute.begin() + displ_length[target_pes[i].first]);
         displ_length[target_pes[i].first] += queries[i].length;
+        lengths_to_distribute[displ[target_pes[i].first]++] = queries[i].length;
         if (target_pes[i].first != target_pes[i].second) {
           std::copy_n(queries[i].query, queries[i].length, 
             queries_to_distribute.begin() + displ_length[target_pes[i].second]);
           displ_length[target_pes[i].second] += queries[i].length;
+          lengths_to_distribute[displ[target_pes[i].second]++] = queries[i].length;
         }
       }
     }
@@ -164,8 +167,8 @@ public:
         target_pes[i] = std::make_pair(-1, -1);
       }
     }
-    std::vector<GlobalIndex> displ(env_.size(), 0);
-    std::vector<GlobalIndex> displ_length(env_.size(), 0);
+    std::vector<size_t> displ(env_.size(), 0);
+    std::vector<size_t> displ_length(env_.size(), 0);
     for (int32_t i = 1; i < env_.size(); ++i) {
       displ[i] = displ[i - 1] + hist[i - 1];
       displ_length[i] = displ_length[i - 1] + hist_length[i - 1];
@@ -178,10 +181,12 @@ public:
         std::copy_n(queries[i].query, queries[i].length, 
           queries_to_distribute.begin() + displ_length[target_pes[i].first]);
         displ_length[target_pes[i].first] += queries[i].length;
+        lengths_to_distribute[displ[target_pes[i].first]++] = queries[i].length;
         if (target_pes[i].first != target_pes[i].second) {
           std::copy_n(queries[i].query, queries[i].length, 
             queries_to_distribute.begin() + displ_length[target_pes[i].second]);
           displ_length[target_pes[i].second] += queries[i].length;
+          lengths_to_distribute[displ[target_pes[i].second]++] = queries[i].length;
         }
       }
     }
