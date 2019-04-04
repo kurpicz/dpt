@@ -22,6 +22,9 @@
 #include "tree/patricia_trie_pointer.hpp"
 #include "util/uint_types.hpp"
 
+using glidx_t = dpt::uint40;
+//using glidx_t = uint64_t;
+
 int32_t main(int32_t argc, char const* argv[]) {
   dpt::mpi::environment env;
   tlx::CmdlineParser cp;
@@ -49,15 +52,15 @@ int32_t main(int32_t argc, char const* argv[]) {
     return -1;
   }
 
-  auto local_text = dpt::mpi::distribute_file<uint8_t, dpt::uint40,
+  auto local_text = dpt::mpi::distribute_file<uint8_t, glidx_t,
                                               uint32_t>(text_file.c_str(), 40);
-  dpt::com::manager<uint8_t, dpt::uint40, uint32_t> com_manager(std::move(local_text));
-  auto local_sa = dpt::mpi::distribute_file<dpt::uint40, dpt::uint40,
+  dpt::com::manager<uint8_t, glidx_t, uint32_t> com_manager(std::move(local_text));
+  auto local_sa = dpt::mpi::distribute_file<glidx_t, glidx_t,
                                             uint32_t>(sa_file.c_str(), 0);
-  auto local_lcp = dpt::mpi::distribute_file<dpt::uint40, dpt::uint40,
+  auto local_lcp = dpt::mpi::distribute_file<glidx_t, glidx_t,
                                              uint32_t>(lcp_file.c_str(), 0);
   
-  dpt::tree::distributed_patricia_trie<uint8_t, dpt::uint40, uint32_t,
+  dpt::tree::distributed_patricia_trie<uint8_t, glidx_t, uint32_t,
                                        dpt::tree::compact_trie_pointer,
                                        dpt::tree::patricia_trie_pointer> dpt(text_file.c_str(),
                                                                              sa_file.c_str(),
@@ -76,9 +79,9 @@ int32_t main(int32_t argc, char const* argv[]) {
       std::exit(-1);
     }
     auto query_text = dpt::mpi::distribute_linewise<uint8_t,
-                                                    dpt::uint40, uint32_t>(query_file, number_queries,
+                                                    glidx_t, uint32_t>(query_file, number_queries,
                                                     30, 0, env);
-    dpt::query::query_list<uint8_t, dpt::uint40,
+    dpt::query::query_list<uint8_t, glidx_t,
                            uint32_t> queries(std::move(query_text), 0, 30);
     start_time = MPI_Wtime();
     if (query_type.compare("co") == 0) {
