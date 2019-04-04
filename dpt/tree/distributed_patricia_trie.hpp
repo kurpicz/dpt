@@ -126,7 +126,7 @@ public:
     }
     std::vector<Alphabet> queries_to_distribute(
       displ_length.back() + hist_length.back());
-    std::vector<LocalIndex> lengths_to_distribute(queries.size());
+    std::vector<LocalIndex> lengths_to_distribute(displ.back() + hist.back());
     for (size_t i = 0; i < queries.size(); ++i) {
       if (target_pes[i].first >= 0) {
         std::copy_n(queries[i].query, queries[i].length, 

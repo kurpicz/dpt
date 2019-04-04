@@ -56,11 +56,7 @@ public:
       return { search_state::MATCH, result.position };
     }
     // else we have found a match already
-    assert(search_state::MATCH);
-    if ((result.state == search_state::LEFT_OF && !(result.position & 1UL)) ||
-      (result.state == search_state::RIGHT_OF && (result.position & 1UL))) {
-      return { search_state::NO_MATCH, 0 };
-    }
+    assert(result.state == search_state::MATCH);
     return result;
   }
 
@@ -87,7 +83,7 @@ public:
       return { search_state::MATCH, result.left_position, result.right_position };
     }
     // else we have found a match already
-    assert(search_state::MATCH);
+    assert(result.state == search_state::MATCH);
     return result;
   }
 
