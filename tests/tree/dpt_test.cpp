@@ -77,7 +77,18 @@ TEST_F(dpt_test, existential_batched_existing) {
   q_list queries = gen_random_existing_queries(2000, 10);
   auto results = dpt_.existential_batched<dpt::com::collective_communication>(
     std::move(queries));
-  ASSERT_EQ(2000, results.size());
+  
+  size_t local_result_size = results.size();
+  size_t global_result_size = 0;
+  MPI_Allreduce(
+    &local_result_size,
+    &global_result_size,
+    1,
+    MPI_UNSIGNED_LONG_LONG,
+    MPI_SUM,
+    MPI_COMM_WORLD);
+ 
+  ASSERT_EQ(8000, global_result_size);
   for (const auto& result : results) {
     ASSERT_EQ(dpt::tree::search_state::MATCH, result);
   }
@@ -91,6 +102,7 @@ TEST_F(dpt_test, first_occurrence_batched_non_existing) {
   q_list queries(std::move(queries_txt), std::move(query_lengths));
   auto results = dpt_.existential_batched<dpt::com::collective_communication>(
     std::move(queries));
+
   for (const auto& result : results) {
     ASSERT_NE(dpt::tree::search_state::MATCH, result);
   }

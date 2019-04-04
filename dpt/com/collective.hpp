@@ -158,6 +158,7 @@ std::vector<Alphabet>
       pos_size_request { pe_and_pos.position, substring_lengths[i] };
   }
   std::vector<size_t>().swap(hist);
+
   // Communicate the requests
   std::vector<size_t> rec_req_counts;
   std::vector<pos_size_request> rec_req_positions;
@@ -170,6 +171,9 @@ std::vector<Alphabet>
   size_t request_size = 0;
   size_t target_pe = 0;
   size_t request_number = 0;
+  while (target_pe < rec_req_counts.size() && rec_req_counts[target_pe] == 0) {
+    ++target_pe;
+  }
   for (const auto& request : rec_req_positions) {
     std::vector<Alphabet> tmp(local_text.data_begin() + request.position,
       local_text.data_begin() + request.position + request.size);
@@ -183,12 +187,15 @@ std::vector<Alphabet>
       request_size = 0;
     }
   }
+
   std::vector<pos_size_request>().swap(rec_req_positions);
   std::vector<Alphabet> rec_characters =
     dpt::mpi::alltoallv(response, response_sizes);
+
   // Compute the results with the initially computed offsets.
   std::vector<Alphabet> result;
   result.reserve(rec_characters.size());
+
   for (size_t req = 0; req < text_positions.size(); ++req) {
     std::copy_n(
       rec_characters.begin() + start_pos_receiving[text_positions[req]],

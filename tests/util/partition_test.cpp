@@ -25,7 +25,7 @@ protected:
       'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
       'y', 'z'};
     part = std::make_unique<partition>(
-      content.size() * 2, content.size(), std::move(content));
+      content.size() * 4, content.size(), std::move(content));
   }
 
   virtual void TearDown() { }
@@ -54,6 +54,10 @@ TEST_F(partition_test, ProcessingElemenetAndPosition) {
       std::make_pair(static_cast<int32_t>(0), i));
     ASSERT_EQ(part->pe_and_norm_position(i + 26),
       std::make_pair(static_cast<int32_t>(1), i));
+    ASSERT_EQ(part->pe_and_norm_position(i + 52),
+      std::make_pair(static_cast<int32_t>(2), i));
+    ASSERT_EQ(part->pe_and_norm_position(i + 78),
+      std::make_pair(static_cast<int32_t>(3), i));
   }
 }
 

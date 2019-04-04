@@ -168,6 +168,7 @@ public:
     auto req_substrings =
       manager.template request_substrings<Communication>(
         req_positions, req_lengths);
+
     for (size_t i = 0, cur_substr_pos = 0; i < rec_queries.size(); ++i) {
       if (states[i] == search_state::NOT_YET_FOUND) {
         size_t pos = 0;
