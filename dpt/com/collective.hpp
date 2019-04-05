@@ -166,7 +166,14 @@ std::vector<Alphabet>
     dpt::mpi::alltoallv_counts(pos_size_requests, counts);
   // Prepare the responses for the received requests (i.e., allocate memory and
   // compute the displacements).
+  size_t response_size = 0;
+  auto res_size_accu = [](size_t init, pos_size_request const& req) {
+    return init + req.size;
+  };
+  std::accumulate(rec_req_positions.begin(), rec_req_positions.end(), 0,
+                  res_size_accu);
   std::vector<Alphabet> response;
+  response.reserve(response_size);
   std::vector<size_t> response_sizes(local_text.text_environment().size(), 0);
   size_t request_size = 0;
   size_t target_pe = 0;
@@ -175,8 +182,6 @@ std::vector<Alphabet>
     ++target_pe;
   }
   for (const auto& request : rec_req_positions) {
-    std::vector<Alphabet> tmp(local_text.data_begin() + request.position,
-      local_text.data_begin() + request.position + request.size);
     std::copy_n(local_text.data_begin() + request.position, request.size,
       std::back_inserter(response));
     request_size += request.size;
