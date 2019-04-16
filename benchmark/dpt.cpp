@@ -52,22 +52,16 @@ int32_t main(int32_t argc, char const* argv[]) {
     return -1;
   }
 
-  auto local_text = dpt::mpi::distribute_file<uint8_t, glidx_t,
-                                              uint32_t>(text_file.c_str(), 40);
-  dpt::com::manager<uint8_t, glidx_t, uint32_t> com_manager(std::move(local_text));
-  auto local_sa = dpt::mpi::distribute_file<glidx_t, glidx_t,
-                                            uint32_t>(sa_file.c_str(), 0);
-  auto local_lcp = dpt::mpi::distribute_file<glidx_t, glidx_t,
-                                             uint32_t>(lcp_file.c_str(), 0);
-  
+  // Construct DPT
+  env.barrier();
+  auto start_time = MPI_Wtime();
   dpt::tree::distributed_patricia_trie<uint8_t, glidx_t, uint32_t,
                                        dpt::tree::compact_trie_pointer,
                                        dpt::tree::patricia_trie_pointer> dpt(text_file.c_str(),
                                                                              sa_file.c_str(),
                                                                              lcp_file.c_str(), 30);
-
-  auto start_time = MPI_Wtime();
   dpt.construct<dpt::com::collective_communication, dpt::com::collective_communication>();
+  env.barrier();
   auto end_time = MPI_Wtime();
   if (env.rank() == 0) {
     std::cout << "CONSTRUCTION TIME: " << end_time - start_time << std::endl;
@@ -83,6 +77,7 @@ int32_t main(int32_t argc, char const* argv[]) {
                                                     30, 0, env);
     dpt::query::query_list<uint8_t, glidx_t,
                            uint32_t> queries(std::move(query_text), 0, 30);
+    env.barrier();
     start_time = MPI_Wtime();
     if (query_type.compare("co") == 0) {
       dpt.counting_batched<dpt::com::collective_communication>(std::move(queries));
@@ -91,6 +86,7 @@ int32_t main(int32_t argc, char const* argv[]) {
     } else {
       dpt.existential_batched<dpt::com::collective_communication>(std::move(queries));
     }
+    env.barrier();
     end_time = MPI_Wtime();
     if (env.rank() == 0) {
       std::cout << "QUERY TIME: " << end_time - start_time << std::endl;
