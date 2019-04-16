@@ -143,7 +143,36 @@ TEST_F(collective_test, RequestSubstringWithEmpty) {
   }
 }
 
-TEST_F(collective_test, RequestSubstrinHead) {
+TEST_F(collective_test, RequestSubstringsSparse) {
+  std::vector<uint32_t> request_positions;
+  std::vector<uint32_t> request_lengths;
+
+  for (int32_t target_pe1 = 0; target_pe1 < env_.size(); ++target_pe1) {
+    for (int32_t target_pe2 = 0; target_pe2 < env_.size(); ++target_pe2) {
+      for (size_t i = 0; i < 10; ++i) {
+        request_positions.push_back(i + (target_pe1 * 26));
+        request_lengths.push_back(5);
+      }
+      for (size_t i = 0; i < 10; ++i) {
+        request_positions.push_back(i + (target_pe2 * 26));
+        request_lengths.push_back(5);
+      }
+
+      auto result = dpt::com::collective_communication<char, uint32_t, uint32_t>::
+        request_substrings(request_positions, request_lengths, part_);
+      for (size_t i = 0, pos = 0; i < request_positions.size(); ++i) {
+        for (size_t j = 0; j < request_lengths[i]; ++j) {
+          ASSERT_EQ(static_cast<char>('a' + (i % 10) + j), result[pos++]);
+        }
+      }
+      request_positions.clear();
+      request_lengths.clear();
+      result.clear();
+    }
+  }
+}
+
+TEST_F(collective_test, RequestSubstringHead) {
   std::vector<uint32_t> request_positions;
   std::vector<uint32_t> request_lengths;
   for (int32_t i = 0; i < env_.size(); ++i) {

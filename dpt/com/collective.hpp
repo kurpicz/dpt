@@ -158,6 +158,7 @@ std::vector<Alphabet>
       pos_size_request { pe_and_pos.position, substring_lengths[i] };
   }
   std::vector<size_t>().swap(hist);
+
   // Communicate the requests
   std::vector<size_t> rec_req_counts;
   std::vector<pos_size_request> rec_req_positions;
@@ -165,7 +166,14 @@ std::vector<Alphabet>
     dpt::mpi::alltoallv_counts(pos_size_requests, counts);
   // Prepare the responses for the received requests (i.e., allocate memory and
   // compute the displacements).
+  size_t response_size = 0;
+  auto res_size_accu = [](size_t init, pos_size_request const& req) {
+    return init + req.size;
+  };
+  std::accumulate(rec_req_positions.begin(), rec_req_positions.end(), 0,
+                  res_size_accu);
   std::vector<Alphabet> response;
+  response.reserve(response_size);
   std::vector<size_t> response_sizes(local_text.text_environment().size(), 0);
 
   size_t i = 0;
@@ -187,9 +195,11 @@ std::vector<Alphabet>
   std::vector<pos_size_request>().swap(rec_req_positions);
   std::vector<Alphabet> rec_characters =
     dpt::mpi::alltoallv(response, response_sizes);
+
   // Compute the results with the initially computed offsets.
   std::vector<Alphabet> result;
   result.reserve(rec_characters.size());
+
   for (size_t req = 0; req < text_positions.size(); ++req) {
     std::copy_n(
       rec_characters.begin() + start_pos_receiving[text_positions[req]],
