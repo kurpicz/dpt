@@ -175,22 +175,21 @@ std::vector<Alphabet>
   std::vector<Alphabet> response;
   response.reserve(response_size);
   std::vector<size_t> response_sizes(local_text.text_environment().size(), 0);
-  size_t request_size = 0;
-  size_t target_pe = 0;
-  size_t request_number = 0;
-  while (target_pe < rec_req_counts.size() && rec_req_counts[target_pe] == 0) {
-    ++target_pe;
-  }
-  for (const auto& request : rec_req_positions) {
-    std::copy_n(local_text.data_begin() + request.position, request.size,
-      std::back_inserter(response));
-    request_size += request.size;
-    ++request_number;
-    if (request_number >= rec_req_counts[target_pe]) {
-      response_sizes[target_pe++] += request_size;
-      request_number = 0;
-      request_size = 0;
+
+  size_t i = 0;
+  for (int pe = 0; pe < local_text.text_environment().size(); ++pe) {
+    if (rec_req_counts[pe] == 0)
+      continue;
+
+    size_t request_size = 0;
+    for (size_t j = 0; j < rec_req_counts[pe]; ++j) {
+      const auto& request = rec_req_positions[i];
+      std::copy_n(local_text.data_begin() + request.position, request.size,
+        std::back_inserter(response));
+      request_size += request.size;
+      ++i;
     }
+    response_sizes[pe] = request_size;
   }
 
   std::vector<pos_size_request>().swap(rec_req_positions);
